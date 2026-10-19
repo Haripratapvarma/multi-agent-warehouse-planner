@@ -1,0 +1,38 @@
+# Warehouse scenario
+# Map: '#' wall, '.' free, 'S' shelf, 'P' packing station
+warehouse-scenario 1
+seed 42
+size 30 20
+map
+##############################
+#............................#
+#.....S....S..S..SS....S...S.#
+#.S..SS.S......S.SS....SS....#
+#.S.....S..SS.....S.S...S....#
+#..S.....S....SS.......S...S.#
+#.S..SS.S.....S......S....S..#
+#..........S...S.S..S..S..S..#
+#..S..S..........S.....S...S.#
+#.......SS.......S.........S.#
+#.S..SS..S....S......S.S.....#
+#..S...........S....S..S..SS.#
+#.SS.S..SS....SS.S..S...S..S.#
+#.S...S.SS..S.S.....SS.S...S.#
+#.............S..SS.SS....S..#
+#.SS.....S..S.....S.S..S..S..#
+#.SS....SS..S.S..S......S.S..#
+#............................#
+#..P...P...P...P...P...P...P.#
+##############################
+end
+robots 10
+robot start 1 1 shelf 23 11 pickup 22 11 station 11 18
+robot start 4 1 shelf 14 6 pickup 13 6 station 23 18
+robot start 13 1 shelf 12 4 pickup 13 4 station 11 18
+robot start 2 1 shelf 21 14 pickup 22 14 station 23 18
+robot start 10 1 shelf 26 11 pickup 26 10 station 11 18
+robot start 5 1 shelf 23 2 pickup 23 1 station 11 18
+robot start 28 1 shelf 24 4 pickup 23 4 station 11 18
+robot start 21 1 shelf 27 9 pickup 26 9 station 19 18
+robot start 15 1 shelf 26 7 pickup 27 7 station 19 18
+robot start 24 1 shelf 14 2 pickup 14 3 station 11 18

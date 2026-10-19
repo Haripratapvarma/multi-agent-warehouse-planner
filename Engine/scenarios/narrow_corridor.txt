@@ -1,0 +1,17 @@
+# Narrow corridor: two robots in rooms at opposite ends of a corridor
+# that is only one cell wide. Each robot must cross to the other side,
+# so one of them has to wait until the corridor is clear.
+# Map: '#' wall, '.' free, 'S' shelf, 'P' packing station
+warehouse-scenario 1
+seed 0
+size 13 5
+map
+#############
+#S.#######.S#
+#...........#
+#P.#######.P#
+#############
+end
+robots 2
+robot start 1 2 shelf 11 1 pickup 10 1 station 11 3
+robot start 11 2 shelf 1 1 pickup 2 1 station 1 3

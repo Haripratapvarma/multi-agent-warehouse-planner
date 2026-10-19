@@ -1,0 +1,19 @@
+# Warehouse scenario
+# Map: '#' wall, '.' free, 'S' shelf, 'P' packing station
+warehouse-scenario 1
+seed 7
+size 12 8
+map
+############
+#..........#
+#.S...S.S..#
+#..........#
+#.SS.......#
+#..........#
+#..P....P..#
+############
+end
+robots 3
+robot start 8 1 shelf 6 2 pickup 7 2 station 3 6
+robot start 6 1 shelf 8 2 pickup 8 1 station 8 6
+robot start 2 1 shelf 2 2 pickup 2 3 station 3 6

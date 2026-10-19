@@ -1,0 +1,5 @@
+{
+    "cmake.sourceDirectory": "${workspaceFolder}/Engine",
+    "cmake.buildDirectory": "${workspaceFolder}/Engine/build",
+    "cmake.configureOnOpen": true
+}
