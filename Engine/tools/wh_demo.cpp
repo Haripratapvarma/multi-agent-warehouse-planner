@@ -1,12 +1,16 @@
-// wh_demo: generates or loads a warehouse scenario, prints the map and
-// compares A* with BFS for every robot's two legs (start -> pickup -> station).
+// wh_demo: generates or loads a warehouse scenario, prints the map,
+// compares single-robot A* with BFS for every robot's two legs
+// (start -> pickup -> station), then plans all robots together without
+// collisions and checks the plan with the validator.
 //
 // Examples:
 //   wh_demo --seed 42 --size 20x10 --robots 4 --density 0.3
-//   wh_demo --load Engine/scenarios/narrow_corridor.txt
+//   wh_demo --load Engine/scenarios/narrow_corridor.txt --show-steps
+//   wh_demo --seed 7 --size 12x8 --robots 3 --planner bfs --order longest-first
 //   wh_demo --seed 7 --size 12x8 --robots 3 --save my_scenario.txt
 
 #include "warehouse/generator.hpp"
+#include "warehouse/planner.hpp"
 #include "warehouse/scenario_io.hpp"
 #include "warehouse/search.hpp"
 
@@ -22,6 +26,8 @@ struct Options {
     wh::GeneratorSettings settings{42, 20, 10, 4, 0.3};
     std::string loadPath;
     std::string savePath;
+    wh::PlanOptions plan;
+    bool showSteps = false;
     bool help = false;
 };
 
@@ -34,6 +40,9 @@ void printUsage()
                  "  --density D        shelf density 0.0-0.9 (default 0.3)\n"
                  "  --load FILE        load a scenario file instead of generating one\n"
                  "  --save FILE        save the scenario to a file\n"
+                 "  --planner NAME     astar-manhattan (default), astar-true-distance or bfs\n"
+                 "  --order NAME       input (default) or longest-first\n"
+                 "  --show-steps       print the map at every time step of the plan\n"
                  "  --help             show this message\n";
 }
 
@@ -67,6 +76,20 @@ Options parseArguments(int argc, char** argv)
             options.loadPath = value(i);
         } else if (arg == "--save") {
             options.savePath = value(i);
+        } else if (arg == "--planner") {
+            const auto planner = wh::plannerFromString(value(i));
+            if (!planner) {
+                throw std::invalid_argument("unknown planner (use astar-manhattan, astar-true-distance or bfs)");
+            }
+            options.plan.planner = *planner;
+        } else if (arg == "--order") {
+            const auto order = wh::orderFromString(value(i));
+            if (!order) {
+                throw std::invalid_argument("unknown order (use input or longest-first)");
+            }
+            options.plan.order = *order;
+        } else if (arg == "--show-steps") {
+            options.showSteps = true;
         } else if (arg == "--help" || arg == "-h") {
             options.help = true;
         } else {
@@ -125,6 +148,65 @@ void printRoute(const wh::Scenario& scenario, const std::vector<wh::Cell>& route
 std::string lengthText(const wh::PathResult& result)
 {
     return result.found() ? std::to_string(result.length()) : std::string("no path");
+}
+
+void printPlan(const wh::Scenario& scenario, const wh::PlanResult& result)
+{
+    std::cout << "Planning order:";
+    for (int robot : result.planningOrder) {
+        std::cout << ' ' << robot;
+    }
+    std::cout << '\n';
+    if (!result.success()) {
+        std::cout << "Planning FAILED: " << result.message << '\n';
+        return;
+    }
+
+    std::cout << std::left << std::setw(7) << "Robot" << std::right << std::setw(13) << "Pickup at t"
+              << std::setw(13) << "Done at t" << std::setw(8) << "Waits" << '\n';
+    for (std::size_t i = 0; i < result.robots.size(); ++i) {
+        const wh::RobotPlan& robot = result.robots[i];
+        int waits = 0;
+        for (std::size_t t = 1; t < robot.path.size(); ++t) {
+            waits += robot.path[t] == robot.path[t - 1] ? 1 : 0;
+        }
+        std::cout << std::left << std::setw(7) << i << std::right << std::setw(13) << robot.pickupTime
+                  << std::setw(13) << robot.finishTime << std::setw(8) << waits << '\n';
+    }
+
+    const wh::PlanMetrics& m = result.metrics;
+    std::cout << "Makespan " << m.makespan << ", total path length " << m.totalPathLength << ", waits " << m.waits
+              << ", cells expanded " << m.expandedNodes << ", planning time " << std::fixed << std::setprecision(3)
+              << m.runtimeMs << " ms\n";
+    std::cout.unsetf(std::ios::fixed);
+    const wh::ValidationResult check = wh::validatePlan(scenario, result.robots);
+    std::cout << "Validator: " << (check.valid ? "plan is collision-free" : "INVALID - " + check.message) << '\n';
+}
+
+// Prints the grid at every time step with robots drawn as digits.
+void printSteps(const wh::Scenario& scenario, const wh::PlanResult& result)
+{
+    for (int t = 0; t <= result.metrics.makespan; ++t) {
+        std::vector<std::string> rows;
+        for (int y = 0; y < scenario.grid.height(); ++y) {
+            std::string row;
+            for (int x = 0; x < scenario.grid.width(); ++x) {
+                row += wh::toChar(scenario.grid.at({x, y}));
+            }
+            rows.push_back(row);
+        }
+        for (std::size_t i = 0; i < result.robots.size(); ++i) {
+            const std::vector<wh::Cell>& path = result.robots[i].path;
+            if (static_cast<std::size_t>(t) < path.size()) {
+                const wh::Cell c = path[static_cast<std::size_t>(t)];
+                rows[static_cast<std::size_t>(c.y)][static_cast<std::size_t>(c.x)] = static_cast<char>('0' + i % 10);
+            }
+        }
+        std::cout << "t = " << t << '\n';
+        for (const std::string& row : rows) {
+            std::cout << "  " << row << '\n';
+        }
+    }
 }
 
 } // namespace
@@ -201,6 +283,15 @@ int main(int argc, char** argv)
         if (!firstRoute.empty()) {
             std::cout << "\nRoute of robot 0 ('R' start, 'p' pickup, 'P' station, '*' path)\n";
             printRoute(scenario, firstRoute, scenario.robots[0]);
+        }
+
+        std::cout << "\nCooperative plan: " << wh::displayName(options.plan.planner) << ", "
+                  << wh::displayName(options.plan.order) << '\n';
+        const wh::PlanResult plan = wh::planScenario(scenario, options.plan);
+        printPlan(scenario, plan);
+        if (options.showSteps && plan.success()) {
+            std::cout << "\nStep by step (digits = robots; a robot disappears once it delivers)\n";
+            printSteps(scenario, plan);
         }
 
         return (allMatch && allFound) ? 0 : 1;

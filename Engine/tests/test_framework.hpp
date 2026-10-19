@@ -75,7 +75,7 @@ inline int runAll()
         if (!passed) {
             ++failedTests;
         }
-        std::cout << (passed ? "[PASS] " : "[FAIL] ") << test.name << '\n';
+        std::cout << (passed ? "[PASS] " : "[FAIL] ") << test.name << std::endl; // flush so progress shows
     }
     std::cout << registry().size() << " tests, " << failedTests << " failed\n";
     return failedTests == 0 ? 0 : 1;

@@ -11,6 +11,13 @@ The planning engine is written in C++ and lives in `Engine/`.
 - Seeded scenario generator (same seed and settings give the same scenario)
 - Scenario files in a small text format (`Engine/scenarios/`)
 - Single-robot A* search (Manhattan distance heuristic) and BFS for comparison
+- Multi-robot prioritized planning ("cooperative A*") over (cell, time) with a
+  reservation table that blocks shared cells and head-on swaps
+- Three planners: A* with Manhattan distance, A* with true distance, and BFS;
+  two robot orderings: input order and longest task first
+- A plan validator that checks any plan step by step
+- Metrics: makespan, total path length, waits, planning time, success
+- `wh_bench` command-line benchmark comparing all planners and orderings
 - Native tests using a small self-written test helper, registered with CTest
 
 ## Build and test
@@ -31,5 +38,6 @@ ctest --test-dir Engine/build
 
 ```
 Engine/build/bin/wh_demo --seed 42 --size 20x10 --robots 4 --density 0.3
-Engine/build/bin/wh_demo --load Engine/scenarios/narrow_corridor.txt
+Engine/build/bin/wh_demo --load Engine/scenarios/narrow_corridor.txt --show-steps
+Engine/build/bin/wh_bench --seeds 100 --robots 10 --size 30x20 --csv results.csv
 ```

@@ -35,4 +35,9 @@ PathResult findPathAStar(const Grid& grid, Cell start, Cell goal);
 // costs 1 it also returns a shortest path, just with more work.
 PathResult findPathBfs(const Grid& grid, Cell start, Cell goal);
 
+// Distance (number of moves) from every cell to `goal`, found with one
+// backward BFS. Indexed by grid.index(cell); -1 where the goal cannot be
+// reached or the cell is not passable. Ignores other robots.
+std::vector<int> distanceMap(const Grid& grid, Cell goal);
+
 } // namespace wh

@@ -170,4 +170,28 @@ PathResult findPathBfs(const Grid& grid, Cell start, Cell goal)
     return result;
 }
 
+std::vector<int> distanceMap(const Grid& grid, Cell goal)
+{
+    std::vector<int> distance(static_cast<std::size_t>(grid.cellCount()), -1);
+    if (!grid.isPassable(goal)) {
+        return distance;
+    }
+    std::queue<Cell> open;
+    distance[static_cast<std::size_t>(grid.index(goal))] = 0;
+    open.push(goal);
+    while (!open.empty()) {
+        const Cell current = open.front();
+        open.pop();
+        const int nextDistance = distance[static_cast<std::size_t>(grid.index(current))] + 1;
+        for (Cell move : kMoves) {
+            const Cell next = step(current, move);
+            if (grid.isPassable(next) && distance[static_cast<std::size_t>(grid.index(next))] < 0) {
+                distance[static_cast<std::size_t>(grid.index(next))] = nextDistance;
+                open.push(next);
+            }
+        }
+    }
+    return distance;
+}
+
 } // namespace wh

@@ -34,17 +34,27 @@ add_library(wh_core STATIC
     src/generator.cpp
     src/search.cpp
     src/scenario_io.cpp
+    src/reservation_table.cpp
+    src/plan.cpp
+    src/planner.cpp
 )
 target_include_directories(wh_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 # Needed later so the core can be linked into a shared library on Linux.
 set_target_properties(wh_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-# ---- Command-line demo ------------------------------------------------------
+# ---- Command-line tools ----------------------------------------------------
 add_executable(wh_demo tools/wh_demo.cpp)
 target_link_libraries(wh_demo PRIVATE wh_core)
 
+add_executable(wh_bench tools/wh_bench.cpp)
+target_link_libraries(wh_bench PRIVATE wh_core)
+
 # ---- Tests ------------------------------------------------------------------
-enable_testing()
+# include(CTest) enables testing and writes DartConfiguration.tcl, which stops
+# a harmless "Cannot find file" message when VS Code runs the tests.
+# The property stops it adding extra dashboard targets to the build.
+set_property(GLOBAL PROPERTY CTEST_TARGETS_ADDED 1)
+include(CTest)
 
 function(wh_add_test name)
     add_executable(${name} tests/${name}.cpp)
@@ -59,3 +69,6 @@ wh_add_test(test_grid)
 wh_add_test(test_generator)
 wh_add_test(test_astar)
 wh_add_test(test_scenario_io)
+wh_add_test(test_reservation_table)
+wh_add_test(test_validator)
+wh_add_test(test_cooperative)
