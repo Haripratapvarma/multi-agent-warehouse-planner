@@ -10,10 +10,18 @@ namespace Warehouse.ViewModels.Tests;
 /// </summary>
 public sealed class FakeEngine : IWarehouseEngine
 {
-    public List<GeneratorOptions> GenerateCalls { get; } = [];
-    public List<(PlannerType Planner, RobotOrdering Ordering)> PlanCalls { get; } = [];
+    // The compare screen calls the engine from many threads at once,
+    // so every list is guarded by this lock.
+    private readonly object _lock = new();
+    private readonly List<GeneratorOptions> _generateCalls = [];
+    private readonly List<(PlannerType Planner, RobotOrdering Ordering)> _planCalls = [];
+    private readonly HashSet<int> _planThreadIds = [];
+
+    public IReadOnlyList<GeneratorOptions> GenerateCalls { get { lock (_lock) return _generateCalls.ToList(); } }
+    public IReadOnlyList<(PlannerType Planner, RobotOrdering Ordering)> PlanCalls { get { lock (_lock) return _planCalls.ToList(); } }
+    public IReadOnlySet<int> PlanThreadIds { get { lock (_lock) return _planThreadIds.ToHashSet(); } }
+    public int? PlanThreadId => PlanThreadIds.Count > 0 ? PlanThreadIds.First() : null;
     public List<(WarehouseScenario Scenario, string Path)> Saved { get; } = [];
-    public int? PlanThreadId { get; private set; }
 
     /// <summary>When set, Generate/Load/Plan throw this.</summary>
     public WarehouseEngineException? Failure { get; set; }
@@ -21,23 +29,38 @@ public sealed class FakeEngine : IWarehouseEngine
     /// <summary>When true, Plan reports that robot 0 could not be planned.</summary>
     public bool PlanFails { get; set; }
 
-    /// <summary>When set, Plan waits for this before returning (to observe IsBusy).</summary>
+    /// <summary>When set, Plan waits for this before returning (to observe a run in progress).</summary>
     public TaskCompletionSource? PlanGate { get; set; }
+
+    /// <summary>Completed when the first Plan call starts.</summary>
+    public TaskCompletionSource PlanStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
     public WarehouseScenario? ScenarioToLoad { get; set; }
 
     public WarehouseScenario Generate(GeneratorOptions options)
     {
-        GenerateCalls.Add(options);
+        lock (_lock)
+        {
+            _generateCalls.Add(options);
+        }
         ThrowIfFailing();
         return MakeScenario(options.Seed, options.Width, options.Height, options.RobotCount);
     }
 
     public PlanOutcome Plan(WarehouseScenario scenario, PlannerType planner, RobotOrdering ordering, int maxTime = 0)
     {
-        PlanThreadId = Environment.CurrentManagedThreadId;
-        PlanCalls.Add((planner, ordering));
-        PlanGate?.Task.Wait();
+        lock (_lock)
+        {
+            _planThreadIds.Add(Environment.CurrentManagedThreadId);
+            _planCalls.Add((planner, ordering));
+        }
+        PlanStarted.TrySetResult();
+        // Wait for the test to open the gate, but never forever: if the code
+        // under test wrongly blocks the test's own thread, fail instead of hanging.
+        if (PlanGate is { } gate && !gate.Task.Wait(TimeSpan.FromSeconds(10)))
+        {
+            throw new TimeoutException("The test never opened PlanGate.");
+        }
         ThrowIfFailing();
         return PlanFails ? FailedPlan(scenario) : MakePlan(scenario);
     }
@@ -129,6 +152,7 @@ public sealed class FakeDialogs : IFileDialogService
 {
     public string? OpenAnswer { get; set; }
     public string? SaveAnswer { get; set; }
+    public string? CsvAnswer { get; set; }
     public string? SuggestedName { get; private set; }
 
     public string? PickScenarioToOpen() => OpenAnswer;
@@ -137,5 +161,11 @@ public sealed class FakeDialogs : IFileDialogService
     {
         SuggestedName = suggestedFileName;
         return SaveAnswer;
+    }
+
+    public string? PickCsvToSave(string suggestedFileName)
+    {
+        SuggestedName = suggestedFileName;
+        return CsvAnswer;
     }
 }

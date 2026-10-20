@@ -30,8 +30,10 @@ public partial class App : Application
             return;
         }
 
-        var simulation = new SimulationViewModel(engine, new FileDialogService(), new DispatcherPlaybackTimer());
-        var window = new MainWindow { DataContext = new MainViewModel(simulation) };
+        var dialogs = new FileDialogService();
+        var simulation = new SimulationViewModel(engine, dialogs, new DispatcherPlaybackTimer());
+        var compare = new CompareViewModel(engine, dialogs);
+        var window = new MainWindow { DataContext = new MainViewModel(simulation, compare) };
         window.Show();
     }
 

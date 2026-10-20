@@ -9,5 +9,8 @@
         <TabItem Header="Simulation">
             <views:SimulationView DataContext="{Binding Simulation}" />
         </TabItem>
+        <TabItem Header="Compare planners">
+            <views:CompareView DataContext="{Binding Compare}" />
+        </TabItem>
     </TabControl>
 </Window>

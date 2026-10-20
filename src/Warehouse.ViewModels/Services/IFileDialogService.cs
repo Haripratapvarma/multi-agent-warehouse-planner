@@ -6,4 +6,6 @@ public interface IFileDialogService
     string? PickScenarioToOpen();
 
     string? PickScenarioToSave(string suggestedFileName);
+
+    string? PickCsvToSave(string suggestedFileName);
 }

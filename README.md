@@ -24,6 +24,9 @@ The planning engine is written in C++ and lives in `Engine/`.
 - A WPF desktop app (`src/Warehouse.Desktop`) to configure scenarios, plan them
   and watch the robots move step by step; its screen logic lives in
   `src/Warehouse.ViewModels` (MVVM, no WPF types) so it can be tested
+- A "Compare planners" tab that runs many seeds × every planner × both
+  orderings on background threads, with progress, cancel, a results table and
+  CSV export
 - Native tests using a small self-written test helper, registered with CTest,
   and xUnit tests for the C# wrapper and the view models
 

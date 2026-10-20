@@ -11,12 +11,6 @@ namespace Warehouse.ViewModels;
 /// </summary>
 public sealed partial class SimulationViewModel : ObservableObject
 {
-    // Limits match the C++ generator, so most mistakes are caught here with
-    // a friendly message before the engine is called.
-    public const int MinWidth = 5;
-    public const int MinHeight = 6;
-    public const int MaxSize = 100;
-    public const double MaxShelfDensity = 0.9;
     public const double MinSpeed = 0.5;
     public const double MaxSpeed = 30;
 
@@ -265,30 +259,8 @@ public sealed partial class SimulationViewModel : ObservableObject
     // ---- Helpers ----
 
     /// <summary>Returns a message describing the first invalid setting, or null.</summary>
-    public string? CheckSettings()
-    {
-        if (Seed < 0)
-        {
-            return "Seed must be 0 or more.";
-        }
-        if (Width < MinWidth || Width > MaxSize)
-        {
-            return $"Width must be between {MinWidth} and {MaxSize}.";
-        }
-        if (Height < MinHeight || Height > MaxSize)
-        {
-            return $"Height must be between {MinHeight} and {MaxSize}.";
-        }
-        if (RobotCount < 1 || RobotCount > Width - 2)
-        {
-            return $"Robots must be between 1 and {Width - 2} (width − 2) for this width.";
-        }
-        if (double.IsNaN(ShelfDensity) || ShelfDensity < 0 || ShelfDensity > MaxShelfDensity)
-        {
-            return $"Shelf density must be between 0 and {MaxShelfDensity}.";
-        }
-        return null;
-    }
+    public string? CheckSettings() =>
+        Seed < 0 ? "Seed must be 0 or more." : ScenarioLimits.Check(Width, Height, RobotCount, ShelfDensity);
 
     private void OnTimerTick(object? sender, EventArgs e)
     {

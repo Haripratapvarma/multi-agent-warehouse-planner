@@ -33,6 +33,19 @@ public sealed class FileDialogService : IFileDialogService
         return dialog.ShowDialog() == true ? dialog.FileName : null;
     }
 
+    public string? PickCsvToSave(string suggestedFileName)
+    {
+        var dialog = new SaveFileDialog
+        {
+            Title = "Export results",
+            Filter = "CSV files (*.csv)|*.csv|All files (*.*)|*.*",
+            FileName = suggestedFileName,
+            DefaultExt = ".csv",
+            InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+        };
+        return dialog.ShowDialog() == true ? dialog.FileName : null;
+    }
+
     /// <summary>
     /// Engine/scenarios of this repository when running from a build folder
     /// (it holds the example files), otherwise the Documents folder.
