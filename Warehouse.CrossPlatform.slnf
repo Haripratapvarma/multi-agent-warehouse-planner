@@ -3,7 +3,9 @@
     "path": "Warehouse.sln",
     "projects": [
       "src\\Warehouse.Interop\\Warehouse.Interop.csproj",
-      "tests\\Warehouse.Interop.Tests\\Warehouse.Interop.Tests.csproj"
+      "src\\Warehouse.ViewModels\\Warehouse.ViewModels.csproj",
+      "tests\\Warehouse.Interop.Tests\\Warehouse.Interop.Tests.csproj",
+      "tests\\Warehouse.ViewModels.Tests\\Warehouse.ViewModels.Tests.csproj"
     ]
   }
 }

@@ -1,0 +1,166 @@
+<UserControl x:Class="Warehouse.Desktop.Views.SimulationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="clr-namespace:Warehouse.Desktop.Controls">
+    <Grid Margin="8">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!-- ===== Left: settings, planner and metrics ===== -->
+        <ScrollViewer Grid.Column="0" VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,10,0">
+
+                <GroupBox Header="Scenario">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="100" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                            </Grid.RowDefinitions>
+
+                            <TextBlock Grid.Row="0" Style="{StaticResource FieldLabel}" Text="Seed" />
+                            <TextBox Grid.Row="0" Grid.Column="1"
+                                     Text="{Binding Seed, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="1" Style="{StaticResource FieldLabel}" Text="Width" />
+                            <TextBox Grid.Row="1" Grid.Column="1"
+                                     Text="{Binding Width, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="2" Style="{StaticResource FieldLabel}" Text="Height" />
+                            <TextBox Grid.Row="2" Grid.Column="1"
+                                     Text="{Binding Height, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="3" Style="{StaticResource FieldLabel}" Text="Robots" />
+                            <TextBox Grid.Row="3" Grid.Column="1"
+                                     Text="{Binding RobotCount, UpdateSourceTrigger=PropertyChanged}" />
+
+                            <TextBlock Grid.Row="4" Style="{StaticResource FieldLabel}" Text="Shelf density" />
+                            <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,4">
+                                <TextBlock DockPanel.Dock="Right" Width="36" TextAlignment="Right"
+                                           VerticalAlignment="Center"
+                                           Text="{Binding ShelfDensity, StringFormat={}{0:0.00}}" />
+                                <Slider Minimum="0" Maximum="0.9" SmallChange="0.05" LargeChange="0.1"
+                                        TickFrequency="0.05" IsSnapToTickEnabled="True"
+                                        VerticalAlignment="Center"
+                                        Value="{Binding ShelfDensity}" />
+                            </DockPanel>
+                        </Grid>
+
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Generate" Command="{Binding GenerateCommand}" FontWeight="SemiBold" />
+                            <Button Content="Load…" Command="{Binding LoadScenarioCommand}" />
+                            <Button Content="Save…" Command="{Binding SaveScenarioCommand}" />
+                        </WrapPanel>
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Planner">
+                    <StackPanel>
+                        <TextBlock Text="Planner" Margin="0,0,0,2" />
+                        <ComboBox ItemsSource="{Binding Planners}" DisplayMemberPath="Name"
+                                  SelectedItem="{Binding SelectedPlanner}" />
+                        <TextBlock Text="Robot order" Margin="0,6,0,2" />
+                        <ComboBox ItemsSource="{Binding Orderings}" DisplayMemberPath="Name"
+                                  SelectedItem="{Binding SelectedOrdering}" />
+                        <Button Content="Plan" Command="{Binding PlanCommand}" FontWeight="SemiBold"
+                                HorizontalAlignment="Left" Margin="0,10,0,0" />
+                    </StackPanel>
+                </GroupBox>
+
+                <GroupBox Header="Plan metrics">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="130" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition /><RowDefinition /><RowDefinition /><RowDefinition />
+                            <RowDefinition /><RowDefinition /><RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="Result" />
+                        <TextBlock Grid.Row="0" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Status, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="1" Text="Completion time" ToolTip="Makespan: time step when the last robot finishes" />
+                        <TextBlock Grid.Row="1" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Metrics.Makespan, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="2" Text="Total path length" ToolTip="Steps of all robots, waits included" />
+                        <TextBlock Grid.Row="2" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Metrics.TotalPathLength, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="3" Text="Waits" />
+                        <TextBlock Grid.Row="3" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Metrics.Waits, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="4" Text="Planning time" />
+                        <TextBlock Grid.Row="4" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Metrics.RuntimeMs, StringFormat={}{0:0.###} ms, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="5" Text="Cells expanded" />
+                        <TextBlock Grid.Row="5" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   Text="{Binding Plan.Metrics.ExpandedNodes, FallbackValue=–}" />
+
+                        <TextBlock Grid.Row="6" Text="Planning order" />
+                        <TextBlock Grid.Row="6" Grid.Column="1" Style="{StaticResource MetricValue}"
+                                   TextWrapping="Wrap" Text="{Binding PlanningOrderText}" />
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- ===== Right: playback controls, the grid and the status line ===== -->
+        <DockPanel Grid.Column="1">
+            <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                <Button Content="{Binding PlayPauseText}" Command="{Binding PlayPauseCommand}" FontWeight="SemiBold" />
+                <Button Content="Step" Command="{Binding StepCommand}" />
+                <Button Content="Reset" Command="{Binding ResetCommand}" />
+                <TextBlock Text="Speed" VerticalAlignment="Center" Margin="12,0,6,6" />
+                <Slider Width="140" Minimum="0.5" Maximum="20" SmallChange="0.5" LargeChange="2"
+                        VerticalAlignment="Center" Margin="0,0,6,6" Value="{Binding StepsPerSecond}" />
+                <TextBlock VerticalAlignment="Center" Margin="0,0,16,6" Width="80"
+                           Text="{Binding StepsPerSecond, StringFormat={}{0:0.#} steps/s}" />
+                <TextBlock VerticalAlignment="Center" Margin="0,0,0,6" FontSize="14" FontWeight="SemiBold"
+                           Text="{Binding TimeText}" />
+            </WrapPanel>
+
+            <Border DockPanel.Dock="Bottom" Padding="8,6" Margin="0,6,0,0" BorderThickness="1" CornerRadius="3">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#EEF3F8" />
+                        <Setter Property="BorderBrush" Value="#C9D6E3" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding IsError}" Value="True">
+                                <Setter Property="Background" Value="#FDECEA" />
+                                <Setter Property="BorderBrush" Value="#E57373" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding IsError}" Value="True">
+                                    <Setter Property="Foreground" Value="#B71C1C" />
+                                    <Setter Property="FontWeight" Value="SemiBold" />
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
+            </Border>
+
+            <Border BorderBrush="#C9D6E3" BorderThickness="1">
+                <controls:WarehouseCanvas Scenario="{Binding Scenario}" Plan="{Binding Plan}"
+                                          Robots="{Binding Robots}" ClipToBounds="True" />
+            </Border>
+        </DockPanel>
+    </Grid>
+</UserControl>

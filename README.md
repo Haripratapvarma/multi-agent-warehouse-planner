@@ -21,8 +21,11 @@ The planning engine is written in C++ and lives in `Engine/`.
 - The engine built as a DLL with a small C interface (`Engine/include/warehouse/c_api.h`)
 - A C# wrapper library (`src/Warehouse.Interop`) using `LibraryImport` and
   `SafeHandle`, so native memory is always released
+- A WPF desktop app (`src/Warehouse.Desktop`) to configure scenarios, plan them
+  and watch the robots move step by step; its screen logic lives in
+  `src/Warehouse.ViewModels` (MVVM, no WPF types) so it can be tested
 - Native tests using a small self-written test helper, registered with CTest,
-  and xUnit tests for the C# wrapper
+  and xUnit tests for the C# wrapper and the view models
 
 ## Build and test
 
@@ -49,10 +52,16 @@ dotnet test
 ```
 
 `Warehouse.CrossPlatform.slnf` lists every C# project except the Windows-only
-desktop app, so the library and its tests also build on Linux:
+desktop app, so the libraries and their tests also build on Linux:
 
 ```
 dotnet test Warehouse.CrossPlatform.slnf
+```
+
+### Desktop app (Windows)
+
+```
+dotnet run --project src/Warehouse.Desktop
 ```
 
 ## Demo

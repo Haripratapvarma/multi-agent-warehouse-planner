@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    All screen logic of the desktop app. It targets plain net10.0 and uses no
+    WPF types, so it builds and is tested on any operating system. Anything
+    that needs Windows (file dialogs, the UI timer) is behind an interface in
+    Services/ and implemented in the Warehouse.Desktop project.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Warehouse.ViewModels</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Warehouse.Interop\Warehouse.Interop.csproj" />
+  </ItemGroup>
+
+</Project>

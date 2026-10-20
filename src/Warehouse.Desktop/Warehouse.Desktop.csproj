@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The WPF desktop app. Windows only; everything testable lives in Warehouse.ViewModels. -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <RootNamespace>Warehouse.Desktop</RootNamespace>
+    <AssemblyName>WarehousePlanner</AssemblyName>
+    <!-- Lets the project compile (not run) on Linux, e.g. on a build server. -->
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Warehouse.ViewModels\Warehouse.ViewModels.csproj" />
+    <ProjectReference Include="..\Warehouse.Interop\Warehouse.Interop.csproj" />
+  </ItemGroup>
+
+</Project>
