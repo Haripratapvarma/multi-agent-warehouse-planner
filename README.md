@@ -18,7 +18,11 @@ The planning engine is written in C++ and lives in `Engine/`.
 - A plan validator that checks any plan step by step
 - Metrics: makespan, total path length, waits, planning time, success
 - `wh_bench` command-line benchmark comparing all planners and orderings
-- Native tests using a small self-written test helper, registered with CTest
+- The engine built as a DLL with a small C interface (`Engine/include/warehouse/c_api.h`)
+- A C# wrapper library (`src/Warehouse.Interop`) using `LibraryImport` and
+  `SafeHandle`, so native memory is always released
+- Native tests using a small self-written test helper, registered with CTest,
+  and xUnit tests for the C# wrapper
 
 ## Build and test
 
@@ -32,6 +36,23 @@ From a terminal with CMake available:
 cmake -S Engine -B Engine/build
 cmake --build Engine/build
 ctest --test-dir Engine/build
+```
+
+### C# projects
+
+Build the C++ engine first: the C# build copies `warehouse_engine.dll`
+(`libwarehouse_engine.so` on Linux) from `Engine/build/bin` next to every
+program that uses it. Then, from the repository root:
+
+```
+dotnet test
+```
+
+`Warehouse.CrossPlatform.slnf` lists every C# project except the Windows-only
+desktop app, so the library and its tests also build on Linux:
+
+```
+dotnet test Warehouse.CrossPlatform.slnf
 ```
 
 ## Demo

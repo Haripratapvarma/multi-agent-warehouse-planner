@@ -9,10 +9,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # multi-config generators such as Visual Studio, which would otherwise
 # add a Debug/ or Release/ subfolder.
 set(WH_BIN_DIR ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WH_BIN_DIR})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WH_BIN_DIR}) # .exe and .dll
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${WH_BIN_DIR}) # .so on Linux
 foreach(config Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER ${config} config_upper)
     set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${config_upper} ${WH_BIN_DIR})
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config_upper} ${WH_BIN_DIR})
 endforeach()
 
 option(WH_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC/Clang only)" OFF)
@@ -39,8 +41,22 @@ add_library(wh_core STATIC
     src/planner.cpp
 )
 target_include_directories(wh_core PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-# Needed later so the core can be linked into a shared library on Linux.
-set_target_properties(wh_core PROPERTIES POSITION_INDEPENDENT_CODE ON)
+# Position-independent code lets the core be linked into the shared library
+# on Linux; hidden visibility keeps its C++ symbols out of the DLL's exports.
+set_target_properties(wh_core PROPERTIES
+    POSITION_INDEPENDENT_CODE ON
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
+
+# ---- DLL with a C interface, used by the C# app ----------------------------
+# Builds warehouse_engine.dll on Windows and libwarehouse_engine.so on Linux.
+add_library(warehouse_engine SHARED src/c_api.cpp)
+target_link_libraries(warehouse_engine PRIVATE wh_core)
+target_compile_definitions(warehouse_engine PRIVATE WH_BUILDING_DLL)
+# Only the functions marked WH_API are exported.
+set_target_properties(warehouse_engine PROPERTIES
+    CXX_VISIBILITY_PRESET hidden
+    VISIBILITY_INLINES_HIDDEN ON)
 
 # ---- Command-line tools ----------------------------------------------------
 add_executable(wh_demo tools/wh_demo.cpp)
@@ -72,3 +88,11 @@ wh_add_test(test_scenario_io)
 wh_add_test(test_reservation_table)
 wh_add_test(test_validator)
 wh_add_test(test_cooperative)
+
+# Tests the DLL through its C interface only, like the C# side uses it.
+add_executable(test_c_api tests/test_c_api.cpp)
+find_package(Threads REQUIRED)
+target_link_libraries(test_c_api PRIVATE warehouse_engine Threads::Threads)
+target_include_directories(test_c_api PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+target_compile_definitions(test_c_api PRIVATE WH_SCENARIO_DIR="${CMAKE_CURRENT_SOURCE_DIR}/scenarios")
+add_test(NAME test_c_api COMMAND test_c_api)

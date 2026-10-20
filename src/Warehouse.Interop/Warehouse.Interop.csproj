@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Warehouse.Interop</RootNamespace>
+    <!-- Needed by the LibraryImport source generator and the pointer code in Native/. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Warehouse.Interop.Tests" />
+  </ItemGroup>
+
+  <!--
+    Copies the native engine built by CMake (Engine/build/bin) next to every
+    program that uses this library: the tests and the app pick it up
+    automatically through their project reference.
+  -->
+  <PropertyGroup>
+    <WarehouseNativeDir>$([MSBuild]::NormalizeDirectory('$(MSBuildThisFileDirectory)..\..\Engine\build\bin'))</WarehouseNativeDir>
+    <WarehouseNativeFile Condition="$([MSBuild]::IsOSPlatform('Windows'))">warehouse_engine.dll</WarehouseNativeFile>
+    <WarehouseNativeFile Condition="!$([MSBuild]::IsOSPlatform('Windows'))">libwarehouse_engine.so</WarehouseNativeFile>
+    <WarehouseNativePath>$(WarehouseNativeDir)$(WarehouseNativeFile)</WarehouseNativePath>
+  </PropertyGroup>
+
+  <ItemGroup Condition="Exists('$(WarehouseNativePath)')">
+    <None Include="$(WarehouseNativePath)" Link="$(WarehouseNativeFile)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+  <Target Name="WarnIfNativeEngineMissing" BeforeTargets="Build" Condition="!Exists('$(WarehouseNativePath)')">
+    <Warning Text="Native engine not found at $(WarehouseNativePath). Build the C++ project in Engine/ first (VS Code: CMake: Build), then build this again." />
+  </Target>
+
+</Project>

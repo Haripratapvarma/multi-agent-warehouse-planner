@@ -1,0 +1,9 @@
+{
+  "solution": {
+    "path": "Warehouse.sln",
+    "projects": [
+      "src\\Warehouse.Interop\\Warehouse.Interop.csproj",
+      "tests\\Warehouse.Interop.Tests\\Warehouse.Interop.Tests.csproj"
+    ]
+  }
+}
