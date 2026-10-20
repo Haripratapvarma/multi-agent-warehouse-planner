@@ -17,6 +17,13 @@ foreach(config Debug Release RelWithDebInfo MinSizeRel)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${config_upper} ${WH_BIN_DIR})
 endforeach()
 
+# Single-configuration generators (Makefiles, Ninja) build without
+# optimisation unless a build type is given; default to Release there.
+get_property(WH_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(NOT WH_MULTI_CONFIG AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
+
 option(WH_SANITIZE "Build with AddressSanitizer and UndefinedBehaviorSanitizer (GCC/Clang only)" OFF)
 
 if(MSVC)

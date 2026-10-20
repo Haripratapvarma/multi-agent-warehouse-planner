@@ -1,0 +1,7 @@
+planner,ordering,runs,successes,success_rate,avg_makespan,avg_path_length,avg_waits,avg_runtime_ms,avg_expanded_nodes
+astar-manhattan,input,100,91,0.9100,82.83,1065.58,4.11,1.6403,2618.4
+astar-manhattan,longest-first,100,90,0.9000,80.97,1062.82,3.04,2.4079,2242.2
+astar-true-distance,input,100,89,0.8900,82.88,1066.29,3.82,2.7260,1372.7
+astar-true-distance,longest-first,100,86,0.8600,80.97,1063.25,2.81,3.7224,1306.2
+bfs,input,100,87,0.8700,82.86,1066.53,3.64,85.7552,216363.5
+bfs,longest-first,100,83,0.8300,80.97,1063.24,2.46,85.3076,213946.2

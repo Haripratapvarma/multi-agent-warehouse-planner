@@ -1,0 +1,72 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  windows:
+    name: Windows - engine, C# and desktop app
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Configure engine
+        run: cmake -S Engine -B Engine/build
+
+      - name: Build engine (Release)
+        run: cmake --build Engine/build --config Release --parallel
+
+      - name: Native tests
+        run: ctest --test-dir Engine/build -C Release --output-on-failure
+
+      # Builds every C# project, including the WPF app, and runs the xUnit tests.
+      # The engine DLL is copied from Engine/build/bin by the interop project.
+      - name: C# build and tests
+        run: dotnet test Warehouse.sln --configuration Release
+
+      - name: Benchmark smoke run
+        run: Engine/build/bin/wh_bench.exe --seeds 5 --robots 10 --size 30x20
+
+  linux-sanitizers:
+    name: Linux - native tests with AddressSanitizer and UndefinedBehaviorSanitizer
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure engine with sanitizers
+        run: cmake -S Engine -B build-sanitize -DCMAKE_BUILD_TYPE=Debug -DWH_SANITIZE=ON
+
+      - name: Build engine
+        run: cmake --build build-sanitize --parallel
+
+      - name: Native tests
+        env:
+          ASAN_OPTIONS: detect_leaks=1:abort_on_error=1
+          UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+        run: ctest --test-dir build-sanitize --output-on-failure
+
+  linux-dotnet:
+    name: Linux - engine library and cross-platform C# tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Build engine (Release)
+        run: |
+          cmake -S Engine -B Engine/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build Engine/build --parallel
+
+      # Everything except the Windows-only WPF app.
+      - name: C# tests
+        run: dotnet test Warehouse.CrossPlatform.slnf --configuration Release
